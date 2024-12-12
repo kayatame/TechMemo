@@ -30,11 +30,20 @@
 ```
 [user@Control Ansible]$ vim inventory.ini
 ---------------------
-[test_servers]
+[target_servers]
 ターゲットノードIP
 ---------------------
 
-[user@Control Ansible]$ ansible -u 実行ユーザ -m ping -i inventory.ini test_servers
+[user@Control Ansible]$ ansible -u 実行ユーザ -m ping -i inventory.ini target_servers
+ターゲットノードIP | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+
+[kayatame@wsl2 Ansible]$ ansible -u 実行ユーザ -m ping -i inventory.ini target_servers --private-key="秘密鍵"
 ターゲットノードIP | SUCCESS => {
     "ansible_facts": {
         "discovered_interpreter_python": "/usr/bin/python3"
