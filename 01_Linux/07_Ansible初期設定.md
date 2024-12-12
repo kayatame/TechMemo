@@ -21,6 +21,10 @@
 ```
 [user@Control ~]$ ssh-copy-id -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa.pub 実行ユーザ@ターゲットノードIP
 ```
+※SSH接続する場合には下記のコマンド
+```
+[user@Control ~]$ ssh-copy-id -o StrictHostKeyChecking=no -i $HOME/.ssh/id_rsa.pub -o IdentityFile=秘密鍵 実行ユーザ@ターゲットノードIP
+```
 
 ## 2. Ansibleテスト実行(コントロールノード)
 ```
