@@ -1,0 +1,60 @@
+■MySQL
+---------------------------------------------------------------------------------------------------------------------
+SHOW FULL PROCESSLIST;
+
+SHOW DATABASES LIKE "データベース名";
+
+SHOW GRANTS FOR "ユーザ名"@"ホスト";
+
+SELECT @@hostname;
+
+SELECT user(), current_user();
+
+SELECT host, user, authentication_string FROM mysql.user;
+
+SELECT host, user, password FROM mysql.user;
+
+SELECT host, user, authentication_string FROM mysql.user WHERE USER="ユーザ名";
+
+SELECT @@log_timestamps;
+
+SHOW GLOBAL STATUS LIKE 'Threads_connected';
+
+SHOW GLOBAL STATUS LIKE 'Max_used_connections';
+
+SHOW GLOBAL VARIABLES LIKE 'max_connections';
+
+SHOW GLOBAL VARIABLES LIKE 'general%';
+
+SHOW GLOBAL VARIABLES LIKE 'log_error%';
+
+SHOW GLOBAL VARIABLES LIKE 'slow_query%';
+
+SHOW GLOBAL VARIABLES LIKE 'long_query_time';
+
+SHOW GLOBAL VARIABLES LIKE 'validate_password%';
+
+SELECT TABLE_SCHEMA, SUM(data_length+index_length) /1024/1024/1024 as GB FROM information_schema.tables GROUP BY table_schema ORDER BY SUM(data_length+index_length) DESC;
+
+SELECT TABLE_SCHEMA, SUM(data_length + index_length) /1024/1024/1024 AS GB FROM information_schema.tables WHERE TABLE_SCHEMA = 'データベース名' GROUP BY TABLE_SCHEMA;
+
+SELECT TABLE_NAME, Engine, table_rows AS tbl_rows, floor((data_length+index_length)/1024/1024) AS ALL_MB, floor((data_length)/1024/1024) AS DATA_MB, floor((index_length)/1024/1024) AS INDEX_MB FROM information_schema.tables WHERE table_schema=database() ORDER BY (data_length+index_length) DESC;
+
+SELECT TABLE_NAME, Engine, table_rows AS tbl_rows, floor((data_length+index_length)/1024/1024) AS ALL_MB, floor((data_length)/1024/1024) AS DATA_MB, floor((index_length)/1024/1024) AS INDEX_MB FROM information_schema.tables WHERE table_schema=database() AND TABLE_NAME = 'テーブル名';
+
+SELECT TABLE_NAME, Engine FROM information_schema.tables WHERE TABLE_NAME = 'データベース名';
+---------------------------------------------------------------------------------------------------------------------
+
+
+■PostgreSQL
+---------------------------------------------------------------------------------------------------------------------
+SHOW ALL;
+
+SHOW max_connections;
+
+SELECT * FROM pg_stat_activity;
+
+SELECT COUNT(*) FROM pg_stat_activity WHERE backend_type = 'client backend' ;
+
+SELECT pg_postmaster_start_time() AS start_time;
+---------------------------------------------------------------------------------------------------------------------

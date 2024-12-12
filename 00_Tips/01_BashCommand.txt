@@ -1,0 +1,56 @@
+【Linuxシステム関連】
+---------------------------------------------------------------------------------------------------------------------
+ps -ylC httpd --sort:rss | awk '$2~/48/{x=x+$8}END{print x/NR/1024 " MB"}'
+
+ps -ylC apache2 --sort:rss | awk '$2~/33/{x=x+$8}END{print x/NR}'
+
+ps -ylC php-fpm | grep "php-fpm$" | awk '$2!~"0" {x=x+$8} END{print x/NR/1024 " MB"}'
+
+grep "VmSwap" /proc/*/status | sort -k 2 -nr | head -5 | cut -d'/' -f3 | xargs -I{} ps u -p{} --no-headers
+
+grep "Killed\|invoked" /var/log/messages
+
+ionice -c 2 -n 7 nice -n 19
+
+find / -type f -printf "%s\n" | awk '{x=x+$1} END{print x}'
+
+for i in `ipcs -s | awk '/apache/{print $2}'`; do ipcrm -s ${i}; done
+---------------------------------------------------------------------------------------------------------------------
+
+
+【調査関連】
+---------------------------------------------------------------------------------------------------------------------
+curl --resolve DOMAIN:443:IP -Ivk https://DOMAIN
+
+curl -s http://169.254.169.254/latest/meta-data/instance-type
+
+awk '$4 >= "[**/Nov/2024:**:**" && $4 < "[**/Nov/2024:**:**"' /var/log/httpd/access_log
+
+cut -d " " -f 12-
+
+{,.$(date +%Y%m%d)}
+---------------------------------------------------------------------------------------------------------------------
+
+
+【ミドルウェア関連】
+---------------------------------------------------------------------------------------------------------------------
+mysql --defaults-file=.my.cnf
+
+iptables -I INPUT 1 -j DROP -s ***.***.***.***
+
+echo -e "$(uname -n) $(date)" | mail -s "Test Mail" -r 送信元メールアドレス 送信先メールアドレス
+---------------------------------------------------------------------------------------------------------------------
+
+
+【SSL関連】
+---------------------------------------------------------------------------------------------------------------------
+openssl x509 -in /etc/httpd/conf.d/SSL/証明書ファイル.crt -noout -text|egrep "Not|CN|DNS"
+
+openssl s_client -connect ドメイン:443 -servername ドメイン -showcerts </dev/null 2>/dev/null | openssl x509 -text | grep "Not\|DNS\|Issue"
+
+domain_list=`cat domains | tr -d ' ' | tr '\n' ','`
+
+echo $domain_list | sed -e 's/,/\n/g' | xargs -I@ bash -c 'echo "--- @ ---";openssl s_client -connect @:443 -servername @ -showcerts </dev/null 2>/dev/null | openssl x509 -text | grep -e Not -e DNS -e Issuer;echo'
+
+echo $domain_list | sed -e 's/,/\n/g' | xargs -I@ bash -c 'echo "--- @ ---";openssl s_client -connect @:443 -servername @ -showcerts </dev/null | grep "return";echo'
+---------------------------------------------------------------------------------------------------------------------

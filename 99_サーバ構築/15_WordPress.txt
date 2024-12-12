@@ -1,0 +1,49 @@
+○ ソースダウンロード
+# cd /usr/local/src/
+# curl -O https://ja.wordpress.org/latest-ja.tar.gz
+# ll latest-ja.tar.gz
+
+
+○ 展開とデータ移動
+# tar zxf latest-ja.tar.gz
+# ll -d wordpress/
+# cp -a wordpress/. /var/www/vhosts/example.com/
+# ll /var/www/vhosts/example.com/
+
+
+○ 権限調整
+# chown -R apache: /var/www/vhosts/example.com/
+# chmod -R g+w /var/www/vhosts/example.com/
+
+
+○ データべース及びデータベースユーザ作成
+# mysql
+
+> CREATE DATABASE `wp_db`;
+> SHOW DATABASES LIKE 'wp_db';
+
+> CREATE USER 'wp_user'@'localhost' IDENTIFIED BY '*********************';
+> SELECT host, user, authentication_string FROM mysql.user WHERE user = 'wp_user';
+
+> GRANT ALL ON `wp_db`.* TO 'wp_user'@'localhost';
+> SHOW GRANTS FOR 'wp_user'@'localhost';
+
+# mysql -u wp_user -p
+
+
+○ 設定ファイル調整
+# cp -ip /var/www/vhosts/example.com/wp-config-sample.php /var/www/vhosts/example.com/wp-config.php
+# vi /var/www/vhosts/example.com/wp-config.php
+-----------------------------------------------------------------------------
+define( 'DB_NAME', 'wp_db' );
+define( 'DB_USER', 'wp_user' );
+define( 'DB_PASSWORD', '*********************' );
+define( 'DB_HOST', '127.0.0.1' );
+-----------------------------------------------------------------------------
+# diff /var/www/vhosts/example.com/wp-config-sample.php /var/www/vhosts/example.com/wp-config.php
+
+
+○ 接続確認
+http://example.com
+
+DBをローカルのみ設定している場合、接続元を127.0.0.1にする必要あり

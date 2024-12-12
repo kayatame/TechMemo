@@ -1,0 +1,62 @@
+○ インストール
+# dnf install dovecot
+# dovecot --version
+
+○ メールボックスの場所を指定
+# cp -ip /etc/dovecot/conf.d/10-mail.conf{,.org}
+# vi /etc/dovecot/conf.d/10-mail.conf
+-----------------------------------------------------------------------------
+mail_location = maildir:~/Maildir
+-----------------------------------------------------------------------------
+# diff /etc/dovecot/conf.d/10-mail.conf{,.org}
+
+Dovecot manual(ユーザーのメールボックスの場所を指定する)
+https://doc.dovecot.org/settings/core/#core_setting-mail_location 
+
+
+○ 平文認証の許可
+# cp -ip /etc/dovecot/conf.d/10-auth.conf{,.org}
+# vi /etc/dovecot/conf.d/10-auth.conf
+-----------------------------------------------------------------------------
+disable_plaintext_auth = no
+-----------------------------------------------------------------------------
+# diff /etc/dovecot/conf.d/10-auth.conf{,.org}
+
+Dovecot manual(TLS/SSLを使用しない場合には設定　平文認証を許可する)
+https://doc.dovecot.org/settings/core/#core_setting-disable_plaintext_auth
+
+
+○ TLS/SSL無効化
+
+# cp -ip /etc/dovecot/conf.d/10-ssl.conf{,.org}
+# vi /etc/dovecot/conf.d/10-ssl.conf
+-----------------------------------------------------------------------------
+ssl = no
+-----------------------------------------------------------------------------
+# diff /etc/dovecot/conf.d/10-ssl.conf{,.org}
+
+Dovecot manual(TLS/SSLを無効にする)
+https://doc.dovecot.org/settings/core/#core_setting-ssl
+
+
+○ 設定反映
+# dovecot -n /dev/null
+# systemctl --now enable dovecot
+# systemctl status dovecot
+
+
+○ ログイン確認
+# telnet localhost 110
+Trying ::1...
+Connected to localhost.
+Escape character is '^]'.
++OK Dovecot ready.
+user user
++OK
+pass ******
++OK Logged in.
+quit
++OK Logging out.
+Connection closed by foreign host.
+
+# tail -2 /var/log/maillog

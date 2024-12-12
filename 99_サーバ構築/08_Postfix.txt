@@ -1,0 +1,43 @@
+○ パッケージインストール
+# dnf install postfix
+# postconf | grep "^mail_version"
+
+
+○ 設定調整(送受信の場合 ※ドメイン全体のメールサーバ)
+# cp -ip /etc/postfix/main.cf{,.org}
+# vi /etc/postfix/main.cf
+-----------------------------------------------------------------------------
+myhostname = mail.example.com
+mydomain = example.com
+myorigin = $myhostname
+inet_interfaces = all
+inet_protocols = ipv4
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = 127.0.0.0/8
+home_mailbox = Maildir/
+smtpd_banner = $myhostname ESMTP unknown
+disable_vrfy_command = yes
+smtpd_helo_required = yes
+-----------------------------------------------------------------------------
+
+送信のみ実施するサーバの場合は下記の設定とする
+-----------------------------------------------------------------------------
+myhostname = mail.example.com
+mydomain = example.com
+mynetworks = 127.0.0.0/8
+smtpd_banner = $myhostname ESMTP unknown
+disable_vrfy_command = yes
+smtpd_helo_required = yes
+-----------------------------------------------------------------------------
+
+
+○ 起動
+# postfix check
+# systemctl --now enable postfix
+# systemctl status postfix
+# netstat -ntpl | grep ":25"
+
+
+○ 送受信テスト
+# echo -e "$(uname -n) $(date)" | mail -s "Test Mail" -r root@example.com hogehoge@gmail.com
+# ll Maildir/new/

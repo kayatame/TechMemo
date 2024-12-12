@@ -1,0 +1,66 @@
+○ パッケージインストール
+# dnf install cyrus-sasl cyrus-sasl-md5 cyrus-sasl-plain cyrus-sasl-devel
+# rpm -q cyrus-sasl
+
+
+○ 設定調整
+# cp -ip /etc/postfix/main.cf{,.$(date +%Y%m%d)}
+# vi /etc/postfix/main.cf
+-----------------------------------------------------------------------------
+smtpd_sasl_auth_enable = yes
+smtpd_recipient_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+    reject_unauth_destination
+-----------------------------------------------------------------------------
+# diff /etc/postfix/main.cf{,.$(date +%Y%m%d)}
+
+# cp -ip /etc/postfix/master.cf{,.org}
+# vi /etc/postfix/master.cf
+#
+# diff /etc/postfix/master.cf{,.org}
+-----------------------------------------------------------------------------
+submission inet n       -       n       -       -       smtpd
+   -o smtpd_sasl_auth_enable=yes
+-----------------------------------------------------------------------------
+
+
+○ 反映
+# systemctl --now enable saslauthd
+# systemctl status saslauthd
+
+# postfix check
+# systemctl restart postfix
+# netstat -ntpl | grep ":587"
+
+
+○ SASL認証確認
+# printf "%s\0%s\0%s" user@example.com user@example.com ************* | openssl base64 -e | tr -d '\n'; echo
+# telnet mail.example.com 587
+Trying 54.249.205.208...
+Connected to mail.example.com.
+Escape character is '^]'.
+220 mail.example.com ESMTP unknown
+EHLO example.com
+250-mail.example.com
+250-PIPELINING
+250-SIZE 10240000
+250-ETRN
+250-STARTTLS
+250-AUTH PLAIN LOGIN
+250-ENHANCEDSTATUSCODES
+250-8BITMIME
+250-DSN
+250-SMTPUTF8
+250 CHUNKING
+AUTH PLAIN **********************************************************************
+235 2.7.0 Authentication successful
+quit
+221 2.0.0 Bye
+Connection closed by foreign host.
+
+
+メーラ等に設定し、SMTP認証を指定して送信した際に下記のようなログが出力されることを確認する
+--------------------------------------------
+sasl_method=LOGIN, sasl_username=user
+--------------------------------------------

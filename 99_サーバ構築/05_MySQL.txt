@@ -1,0 +1,94 @@
+○ インストール(MySQL Community)
+# dnf install https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
+# dnf install mysql-community-server
+# mysql -V
+
+MySQL Community Downloads
+https://dev.mysql.com/downloads/repo/yum/
+
+ダウンロード時にGPGキーのエラーが発生する場合は下記コマンドにて鍵をインストール
+# rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+
+MySQL 8.0 Reference Manual(Signature Checking Using RPM)
+https://dev.mysql.com/doc/refman/8.0/en/checking-rpm-signature.html
+
+
+○ my.cnf調整
+# cp -ip /etc/my.cnf{,.org}
+# vi /etc/my.cnf
+------------------------------------------------------------
+log-error=/var/log/mysql/mysqld.log
+character_set_server = utf8mb4
+collation_server = utf8mb4_bin
+long_query_time = 1
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow_query.log
+log_timestamps=SYSTEM
+default-storage-engine = INNODB
+max_connections = 500
+------------------------------------------------------------
+# diff /etc/my.cnf{,.org}
+
+# mkdir /var/log/mysql
+# chown mysql: /var/log/mysql
+
+
+MySQLへの通信をローカルのみに制限する場合には下記設定を追加する
+-------------------------
+bind_address = 127.0.0.1
+-------------------------
+MySQL 8.0 Reference Manual(IPv6 ローカルホストアドレスを使用した接続)
+https://dev.mysql.com/doc/refman/8.0/ja/ipv6-local-connections.html 
+
+
+○ 起動
+# systemctl --now enable mysqld
+# systemctl status mysqld
+# systemctl is-enabled mysqld
+
+データベースを初期化する際には下記を実施する
+# mysqld --initialize-insecure --user=mysql
+  
+上記で正常に初期化しない場合はデータディレクトリを削除or移動する
+# rm -rf /var/lib/mysql
+
+MySQL 8.0 Reference Manual(データディレクトリの初期化)
+https://dev.mysql.com/doc/refman/8.0/ja/data-directory-initialization.html
+
+MySQL5.7系の場合は下記
+# mysql_install_db --datadir=/var/lib/mysql --user=mysql
+
+MySQL 5.7 Reference Manual(mysql_install_db — Initialize MySQL Data Directory)
+https://dev.mysql.com/doc/refman/5.7/en/mysql-install-db.html
+
+
+○ パスワード設定
+# mysql_secure_installation
+
+MySQL 8.0 Reference Manual(mysql_secure_installation)
+https://dev.mysql.com/doc/refman/8.0/ja/mysql-secure-installation.html 
+
+MariaDB Document(mysql_secure_installation)
+https://mariadb.com/kb/ja/mysql_secure_installation/  
+
+
+○ 設定確認
+# mysql
+> SHOW GLOBAL VARIABLES LIKE '%time_zone';
+> SHOW GLOBAL VARIABLES LIKE 'log_timestamps';
+> SHOW GLOBAL VARIABLES LIKE "collation%";
+> SHOW GLOBAL VARIABLES LIKE "char%";
+> SHOW GLOBAL VARIABLES LIKE 'slow_query%';
+> SHOW GLOBAL VARIABLES LIKE 'log_error';
+> SHOW GLOBAL VARIABLES LIKE 'max_connections';
+
+
+○ データベース/ユーザ作成
+> CREATE DATABASE 'wordpress_db';
+> SHOW DATABASES LIKE 'wordpress_db';
+
+> CREATE USER 'user'@'localhost' IDENTIFIED BY '123456789';
+> SELECT user, host FROM mysql.user WHERE User = 'user';
+
+> GRANT ALL ON wordpress_db.* TO 'user'@'localhost';
+> SHOW GRANTS for 'user'@'localhost';

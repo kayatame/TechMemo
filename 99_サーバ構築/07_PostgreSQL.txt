@@ -1,0 +1,76 @@
+○ インストール(公式リポジトリ)
+# dnf install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# dnf -q module disable postgresql
+# dnf install postgresql16-server
+# psql -V
+
+PostgreSQL Linux downloads
+https://www.postgresql.org/download/linux/redhat/
+
+
+○ データベース初期化 / 起動
+# /usr/pgsql-16/bin/postgresql-16-setup initdb
+# systemctl --now enable postgresql-16
+# systemctl status postgresql-16
+# systemctl is-enabled postgresql-16
+
+
+○ ログ設定調整
+# cp -ip /var/lib/pgsql/16/data/postgresql.conf{,.org}
+# vi /var/lib/pgsql/16/data/postgresql.conf
+---------------------------------------
+log_directory = '/var/log/postgresql'
+---------------------------------------
+# diff /var/lib/pgsql/16/data/postgresql.conf{,.org}
+
+# mkdir /var/log/postgresql
+# chown postgres: /var/log/postgresql
+# ll -d /var/log/postgresql
+
+# systemctl restart postgresql-16
+# tail /var/log/postgresql/postgresql-Sun.log
+
+PostgreSQLに関しては、基本的にはPostgreSQLのプロセスでログを管理している  
+関連性の高いパラメータは下記
+----------------------------------------------------------------------------------
+logging_collector = on                  # ログ収集機構を有効
+log_filename = 'postgresql-%a.log'      # ログファイルを指定
+log_truncate_on_rotation = on           # ローテート設定みたいなもの
+log_rotation_age = 1d                   # ローテートを実施するまでの時間
+log_rotation_size = 0                   # ローテートを実施するサイズ
+log_timezone = 'Asia/Tokyo'             # ログに記載される時間
+log_directory = '/var/log/postgresql'   # ログの保存ディレクトリを指定
+log_destination = 'stderr'              # ログをsyslogで管理する場合に設定
+----------------------------------------------------------------------------------
+PostgreSQL Documents(エラー報告とログ取得)
+https://www.postgresql.jp/docs/16/runtime-config-logging.html
+
+
+○ 認証周り調整
+# cp -ip /var/lib/pgsql/16/data/pg_hba.conf{,.org}
+# vi /var/lib/pgsql/16/data/pg_hba.conf
+------------------------------------------------------------------------
+local   all             all                                     trust
+------------------------------------------------------------------------
+# diff /var/lib/pgsql/16/data/pg_hba.conf{,.org}
+
+# systemctl restart postgresql-16
+
+PostgreSQL Documents(pg_hba.confファイル)
+https://www.postgresql.jp/docs/16/auth-pg-hba-conf.html
+
+上記の設定は無条件でUNIXユーザの接続を許可するので取り扱いにいは注意すること  
+PostgreSQL Documents(Trust認証)
+https://www.postgresql.jp/docs/16/auth-trust.html
+
+
+○ ユーザ作成(スーパーユーザ権限)
+# su - postgres
+$ psql
+
+postgres=# create user "user" password '123456789';
+postgres=# alter role "user" with superuser login;
+
+postgres=# \du
+
+# psql -U user -d template1

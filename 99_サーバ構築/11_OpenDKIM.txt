@@ -1,0 +1,97 @@
+○ パッケージインストール
+
+●RHEL8以前
+# dnf install opendkim opendkim-tools
+
+●RHEL9
+# dnf --enablerepo=crb install opendkim opendkim-tools
+
+# rpm -q opendkim
+
+opendkim のインストールは epel が必要になるので未導入の場合はインストール
+# dnf install epel-release
+
+
+○ DKIM鍵発行
+# mkdir /etc/opendkim/keys/example.com
+
+# opendkim-genkey -D /etc/opendkim/keys/example.com -b 2048 -d example.com -s default
+
+# chown -R opendkim: /etc/opendkim/keys/example.com
+# chmod 750 /etc/opendkim/keys/example.com
+
+# cat /etc/opendkim/keys/example.com/default.txt
+# dig +noall +ans default._domainkey.example.com txt
+
+
+○ opendkim設定ファイル調整
+# cp -ip /etc/opendkim.conf{,.org}
+# vi /etc/opendkim.conf
+-----------------------------------------------------------------------------
+Mode  sv
+Socket        inet:8891@localhost
+KeyTable      /etc/opendkim/KeyTable
+SigningTable  refile:/etc/opendkim/SigningTable
+ExternalIgnoreList    refile:/etc/opendkim/TrustedHosts
+InternalHosts refile:/etc/opendkim/TrustedHosts
+-----------------------------------------------------------------------------
+# diff /etc/opendkim.conf{,.org}
+
+
+
+○ KeyTable調整
+# cp -ip /etc/opendkim/KeyTable{,.org}
+# vi /etc/opendkim/KeyTable
+-----------------------------------------------------------------------------
+default._domainkey.example.com example.com:default:/etc/opendkim/keys/example.com/default.private
+-----------------------------------------------------------------------------
+# diff /etc/opendkim/KeyTable{,.org}
+
+
+○ SigningTable調整
+# cp -ip /etc/opendkim/SigningTable{,.org}
+# vi /etc/opendkim/SigningTable
+-----------------------------------------------------------------------------
+*@example.com default._domainkey.example.com
+-----------------------------------------------------------------------------
+# diff /etc/opendkim/SigningTable{,.org}
+
+
+○ TrustedHosts確認
+「127.0.0.1」と「::1」が含まれていればOK
+# cat /etc/opendkim/TrustedHosts
+
+
+
+○ 秘密鍵整合性確認
+# opendkim-testkey -d example.com -s default -vvv -k /etc/opendkim/keys/example.com/default.private
+
+
+○ Postfix設定調整
+# cp -ip /etc/postfix/main.cf{,.$(date +%Y%m%d)}
+# vi /etc/postfix/main.cf
+-----------------------------------------------------------------------------
+milter_default_action = accept
+smtpd_milters = inet:127.0.0.1:8891
+non_smtpd_milters = $smtpd_milters
+-----------------------------------------------------------------------------
+# diff /etc/postfix/main.cf{,.$(date +%Y%m%d)}
+
+
+○ サービス起動・設定反映
+# systemctl --now enable opendkim
+# systemctl status opendkim
+
+# systemctl restart postfix
+# systemctl status postfix
+
+# netstat -ntpl | grep ":8891"
+
+
+○ 送信テスト
+# echo -e "$(uname -n) $(date)" | mail -s "Test Mail" -r root@example.com hogehoge@gmail.com
+# tail /var/log/maillog
+-----------------------------------------------------------------------------
+DKIM-Signature field added (s=default, d=example.com)
+-----------------------------------------------------------------------------
+

@@ -1,0 +1,41 @@
+○ パッケージインストール
+# dnf install rkhunter
+# rpm -q rkhunter
+
+rkhunter のインストールは epel が必要になるので未導入の場合はインストール
+# dnf install epel-release
+
+
+○ 設定調整
+# cp -ip /etc/rkhunter.conf{,.org}
+# vi /etc/rkhunter.conf
+-----------------------------------------------------------------------------
+ALLOW_SSH_ROOT_USER=no
+-----------------------------------------------------------------------------
+# diff /etc/rkhunter.conf{,.org}
+
+# cp -ip /etc/sysconfig/rkhunter{,.org}
+# vi /etc/sysconfig/rkhunter
+-----------------------------------------------------------------------------
+MAILTO=root@localhost
+-----------------------------------------------------------------------------
+# diff /etc/sysconfig/rkhunter{,.org}
+
+通知名を変更する場合には /etc/cron.daily/rkhunter 内の下記を調整する
+-----------------------------------------------------------------------------
+/bin/cat $TMPFILE1 | /bin/mail -s "rkhunter Daily Run on $(hostname)" $MAILTO
+-----------------------------------------------------------------------------
+
+
+○ rkhunter update
+# rkhunter --update
+
+
+○ 実行テスト
+# rkhunter -c --report-warnings-only
+# sh /etc/cron.daily/rkhunter
+
+
+○ データベース更新
+# rkhunter --propupd
+# rkhunter -c --report-warnings-only
