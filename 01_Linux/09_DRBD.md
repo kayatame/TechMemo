@@ -1,6 +1,7 @@
-○ DRBD用ディスク設定(Master/Slave)
+## 1. DRBD設定手順
+### 1-1. DRBD用ディスク設定(Master/Slave)
 ※ディスクを認識させる前に実施すること
-
+```
 # gdisk /dev/nvme1n1
 -----------------------------------------------------------------------------
 ～
@@ -22,9 +23,10 @@ The operation has completed successfully.
 # partprobe
 # mkdir /drbd
 # ll -d /drbd
+```
 
-
-○ パッケージインストール(Master/Slave)
+### 1-2. パッケージインストール(Master/Slave)
+```
 # dnf install elrepo-release
 
 # vi /etc/yum.repos.d/elrepo.repo
@@ -36,9 +38,10 @@ The operation has completed successfully.
 
 # dnf --enablerepo=elrepo install kmod-drbd9x drbd9x-utils
 # reboot
+```
 
-
-○ DRBD設定調整(Master/Slave)
+### 1-3. DRBD設定調整(Master/Slave)
+```
 # cp -ip /etc/drbd.d/global_common.conf{,.org}
 # vi /etc/drbd.d/global_common.conf
 -----------------------------------------------------------------------------
@@ -61,9 +64,10 @@ common {
         }
 -----------------------------------------------------------------------------
 # grep -v "^\s*#\|^\s*$" /etc/drbd.d/global_common.conf
+```
 
-
-○ リソース・ボリュームの定義(Master/Slave)
+### 1-4. リソース・ボリュームの定義(Master/Slave)
+```
 # vi /etc/drbd.d/r0.res
 -----------------------------------------------------------------------------
 resource r0 {
@@ -87,17 +91,17 @@ resource r0 {
 master 192.168.0.1
 slave  192.168.0.2
 -----------------------------------------------------------------------------
+```
 
-
-○ メタデータ作成 / DRBD起動(Master/Slave)
+### 1-5. メタデータ作成 / DRBD起動(Master/Slave)
 ※DB1/DB2で同時に起動する
-
+```
 # drbdadm create-md r0
 # systemctl start drbd
+```
 
-
-○ プライマリの調整(Master)
-
+### 1-6. プライマリの調整(Master)
+```
 # drbdadm primary --force r0
 # drbdadm status r0
 
@@ -118,15 +122,17 @@ r0 role:Secondary
   master role:Primary
     peer-disk:UpToDate
 -----------------------------------------------------------------------------
+```
 
-
-○ /dev/drbd0をMySQLディスクとして利用するためフォーマット / mount(Master)
+### 1-7. /dev/drbd0をMySQLディスクとして利用するためフォーマット / mount(Master)
+```
 # mkfs -t ext4 /dev/drbd0
 # mount /dev/drbd0 /drbd
 # df -Th
+```
 
-
-○ マウントテスト(Master/Slave)
+### 1-8. マウントテスト(Master/Slave)
+```
 ・Master
 # echo "test" > /drbd/test.txt ; chmod 705 /drbd/test.txt
 # ll /drbd/
@@ -139,24 +145,25 @@ r0 role:Secondary
 # drbdadm status r0      # ここでPrimaryになっていることを確認
 # mount /dev/drbd0 /drbd
 # ll /drbd
-
+```
 以降の作業を進めるために、MasterとSlaveを変えておく
 
-
-○ MySQLインストール(Master/Slave)
+### 1-9. MySQL関連設定
+#### 1-9-1. MySQLインストール(Master/Slave)
 　/dev/drbd0 が /data にマウントされている状態で進める
+```
 # dnf install https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
 # dnf install mysql-community-server
 # mysql -V
 
 ダウンロード時にGPGキーのエラーが発生する場合は下記コマンドにて鍵をインストール
 # rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2023
+```
+[MySQL 8.0 Reference Manual(Signature Checking Using RPM)](https://dev.mysql.com/doc/refman/8.0/en/checking-rpm-signature.html)
 
-MySQL 8.0 Reference Manual(Signature Checking Using RPM)
-https://dev.mysql.com/doc/refman/8.0/en/checking-rpm-signature.html
 
-
-○ MySQL初期設定(Master)
+#### 1-9-2. MySQL初期設定(Master)
+```
 # mv /var/lib/mysql /drbd/mysql
 # ln -s /drbd/mysql /var/lib/mysql
 
@@ -164,29 +171,33 @@ https://dev.mysql.com/doc/refman/8.0/en/checking-rpm-signature.html
 # systemctl status mysqld
 
 # systemctl stop mysqld
+```
 
-
-○ MySQL初期設定(Slave)
+#### 1-9-3. MySQL初期設定(Slave)
+```
 # mv /var/lib/mysql /tmp/
 # ln -s /drbd/mysql /var/lib/mysql
+```
 
-
-○ サービス停止とアンマウント(Master/Slave)
+### 1-10. サービス停止とアンマウント(Master/Slave)
+```
 # umount /drbd
 # systemctl stop drbd
+```
 
-
-○ Pacemaker+Corosync+Pcsdパッケージインストール(Master/Slave)
+### 1-11. Pacemaker+Corosync+Pcsdパッケージインストール(Master/Slave)
+```
 # dnf --enablerepo=highavailability install corosync pacemaker pcs
 
 # grep "hacluster" /etc/passwd
 # passwd hacluster
 
 # systemctl start pcsd
+```
 
-
-◇ pcsクラスタ設定(Master)
-○ corosyncの設定ファイルを記述
+### 1-12. pcsクラスタ設定(Master)
+#### 1-12-1. corosyncの設定ファイルを記述
+```
 # vi /etc/corosync/corosync.conf
 -----------------------------------------------------------------------------
 totem {
@@ -223,9 +234,10 @@ logging {
    timestamp: on
 }
 -----------------------------------------------------------------------------
+```
 
-
-○ クラスタ構成インスタンスの事前認証
+#### 1-12-2. クラスタ構成インスタンスの事前認証
+```
 # pcs cluster auth
 Warning: Unable to read the known-hosts file: No such file or directory: '/var/lib/pcsd/known-hosts'
 master: Not authorized
@@ -235,9 +247,10 @@ Username: hacluster
 Password:
 master: Authorized
 slave: Authorized
+```
 
-
-○ クラスタのセットアップを行う
+#### 1-12-3. クラスタのセットアップを行う
+```
 # pcs cluster setup my_cluster master addr=172.31.12.26 slave addr=172.31.3.31 --force
 Warning: master: The host seems to be in a cluster already as cluster configuration files have been found on the host. If the host is not part of a cluster, run 'pcs cluster destroy' on host 'master' to remove those configuration files
 Destroying cluster on hosts: 'master', 'slave'...
@@ -255,25 +268,29 @@ Sending 'corosync.conf' to 'master', 'slave'
 master: successful distribution of the file 'corosync.conf'
 slave: successful distribution of the file 'corosync.conf'
 Cluster has been successfully set up.
+```
 
-
-○ pcsクラスタの起動
+#### 1-12-4. pcsクラスタの起動
+```
 # pcs cluster start --all
 master: Starting Cluster...
 slave: Starting Cluster...
+```
 
-
-○ pcsクラスタの自動起動
+#### 1-12-5. pcsクラスタの自動起動
+```
 # pcs cluster enable --all
 master: Cluster Enabled
 slave: Cluster Enabled
+```
 
-
-○ STONITHの無効化
+#### 1-12-6. STONITHの無効化
+```
 # pcs property set stonith-enabled=false
+```
 
-
-○ pcsのステータス確認
+#### 1-12-7. pcsのステータス確認
+```
 # pcs status
 Cluster name: my_cluster
 Cluster Summary:
@@ -294,62 +311,71 @@ Daemon Status:
   corosync: active/enabled
   pacemaker: active/enabled
   pcsd: active/disabled
+```
 
-
-○ Slaveに設定ファイルが同期されていることを確認(Slave)
+#### 1-12-8. Slaveに設定ファイルが同期されていることを確認(Slave)
+```
 # less /etc/corosync/corosync.conf
+```
 
-
-◇ pcsリソース登録(Master)
-
-○ DRDB管理用リソースの登録
+### 1-13. pcsリソース登録(Master)
+#### 1-13-1. DRDB管理用リソースの登録
+```
 # pcs resource create drbd_r0 ocf:linbit:drbd drbd_resource=r0 op monitor interval=10s role=Master monitor interval=30s role=Slave
 Deprecation Warning: Value 'Master' of option role is deprecated and should not be used, use 'Promoted' value instead
 Deprecation Warning: Value 'Slave' of option role is deprecated and should not be used, use 'Unpromoted' value instead
+```
 
-
-○ DRBD プライマリ/セカンダリ確認用リソース登録
+#### 1-13-2. DRBD プライマリ/セカンダリ確認用リソース登録
+```
 # pcs resource promotable drbd_r0 master-max=1 master-node-max=1 clone-max=2 clone-node-max=1 notify=true
 Deprecation Warning: configuring meta attributes without specifying the 'meta' keyword is deprecated and will be removed in a future release
+```
 
-
-○ DRBDデバイスを/mnt/drbd0にマウントするリソースをmysqlリソースグループとして登録
+#### 1-13-3. DRBDデバイスを/mnt/drbd0にマウントするリソースをmysqlリソースグループとして登録
 　directoryの指定に注意　自身でDRBD領域として設定したディレクトリを指定
+```
 # pcs resource create fs_mysql ocf:heartbeat:Filesystem device=/dev/drbd0 directory=/drbd fstype=ext4 --group mysql
 Deprecation Warning: Using '--group' is deprecated and will be replaced with 'group' in a future release. Specify --future to switch to the future behavior.
+```
 
-
-○ drbd_r0-clone と mysql リソースグループの一連の処理を同一サーバで実行するよう colocation制約の登録
+#### 1-13-4. drbd_r0-clone と mysql リソースグループの一連の処理を同一サーバで実行するよう colocation制約の登録
+```
 # pcs constraint colocation add mysql with drbd_r0-clone INFINITY with-rsc-role=Master
+```
 
-
-○ DRBDがMasterのステータスになってから、mysqlリソースグループの処理を始めるorder制約を登録
+#### 1-13-5. DRBDがMasterのステータスになってから、mysqlリソースグループの処理を始めるorder制約を登録
+```
 # pcs constraint order promote drbd_r0-clone then start mysql
 Adding drbd_r0-clone mysql (kind: Mandatory) (Options: first-action=promote then-action=start)
+```
 
-
-○ fs_mysqlリソース登録時点で出ているエラーを一度クリア
+#### 1-13-6. fs_mysqlリソース登録時点で出ているエラーを一度クリア
+```
 # pcs resource cleanup
 Cleaned up all resources on all nodes
 Waiting for 3 replies from the controller
 ... got reply
 ... got reply
 ... got reply (done)
+```
 
-
-○ MySQL管理用リソースを mysqlリソースグループに登録
+#### 1-13-7. MySQL管理用リソースを mysqlリソースグループに登録
+```
 # pcs resource create mysqld systemd:mysqld --group mysql
 Deprecation Warning: Using '--group' is deprecated and will be replaced with 'group' in a future release. Specify --future to switch to the future behavior.
+```
 
-
-○ VIP管理用リソースを mysqlリソースグループに登録
+#### 1-13-8. VIP管理用リソースを mysqlリソースグループに登録
 ※vipはMaster/Slaveで設定したプライベートIP以外を指定  
 　ネットマスクとNICは基本的には /24 と eth0(既存ローカルIPが付与されているNIC) を選択しておく
+```
 # pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=172.31.3.12 cidr_netmask=24 nic="eth0" --group mysql
 Deprecation Warning: Using '--group' is deprecated and will be replaced with 'group' in a future release. Specify --future to switch to the future behavior.
+```
 
-
-○ セットアップ完了を確認
+#### 1-13-9. セットアップ完了を確認
+```
 # pcs status
 Cluster name: my_cluster
 Cluster Summary:
@@ -376,11 +402,11 @@ Daemon Status:
   corosync: active/enabled
   pacemaker: active/enabled
   pcsd: inactive/disabled
+```
 
-
-○ フェイルオーバテスト
+### 1-14. フェイルオーバテスト
 Primaryを再起動してSecondary でMySQLが起動しておりVIPが付与されていることを確認
-
+```
 ・Master
 # reboot
 
@@ -388,3 +414,4 @@ Primaryを再起動してSecondary でMySQLが起動しておりVIPが付与さ�
 # pcs status
 # systemctl status mysqld
 # ip a
+```

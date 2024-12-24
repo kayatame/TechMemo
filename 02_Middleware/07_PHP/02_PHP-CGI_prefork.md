@@ -1,5 +1,4 @@
-# 1.prefork設定手順
-
+## 1.prefork設定手順
 ### 1-1. MPM調整
 ```
 # httpd -V | grep "MPM"
@@ -24,7 +23,6 @@ RHEL8系以降、AppStreamでは mod_php は廃止しているので、prefork �
 
 [Red Hat Documentation(RHEL 9 の採用における考慮事項)](https://docs.redhat.com/ja/documentation/red_hat_enterprise_linux/9/html-single/considerations_in_adopting_rhel_9/index#ref_removed-functionality-identity-management_assembly_identity-management)
 
-
 ### 1-2. Remiリポジトリインストール
 ```
 # dnf install https://rpms.remirepo.net/enterprise/remi-release-9.rpm
@@ -34,7 +32,6 @@ RHEL8系以降、AppStreamでは mod_php は廃止しているので、prefork �
 # dnf install epel-release
 ```
 [Remi公式サイト](https://rpms.remirepo.net/)
-
 
 ### 1-3. モジュール有効化
 ```

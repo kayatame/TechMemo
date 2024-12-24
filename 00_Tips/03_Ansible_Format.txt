@@ -1,0 +1,189 @@
+---
+- hosts: target_servers
+  become: yes
+  vars_files:
+    - vars.yml
+  tasks:
+
+# ————————————————————————————
+# Linuxコマンド実行
+# ————————————————————————————
+  - name: **********************
+    ansible.builtin.command:
+      cmd: *************************
+
+# ————————————————————————————
+# パッケージインストール
+# ————————————————————————————
+  - name: Install *******
+    ansible.builtin.dnf:
+      name: "{{ item }}"
+      state: latest
+    loop:
+    - ****************
+
+# ————————————————————————————
+# ソースダウンロード
+# ————————————————————————————
+  - name: Download *********
+    ansible.builtin.get_url:
+      dest: /usr/local/src/
+      url: ***************************
+
+# ————————————————————————————
+# サービス起動と自動起動設定
+# ————————————————————————————
+  - name: Start *******
+    ansible.builtin.service:
+      name: *******
+      state: started
+      enabled: yes
+
+# ————————————————————————————
+# サービス再起動
+# ————————————————————————————
+  - name: Restart ******
+    ansible.builtin.service:
+      name: ******
+      state: restarted
+
+# ————————————————————————————
+# ファイルコピー
+# ————————————————————————————
+  - name: *****************
+    ansible.builtin.copy:
+      src: *****************(コピー元)
+      dest: ****************(コピー先)
+      remote_src: yes
+
+# ————————————————————————————
+# ファイル転送
+# ————————————————————————————
+  - name: Copy conf file
+    ansible.builtin.template:
+      src: "{{ base_path }}**********/template/**********(転送元)"
+      dest: "**********"
+      owner: "root"
+      group: "root"
+      mode: "0644"
+
+# ————————————————————————————
+# ファイルへの追記(1行)
+# ————————————————————————————
+  - name: ****************
+    ansible.builtin.lineinfile:
+      path: ****************
+      line: "************************"
+      backup: yes
+      create: yes #新規作成の場合はこちらを定義する
+
+# ————————————————————————————
+# ファイルへの追記(複数行)
+# ————————————————————————————
+  - name: Add *****************
+    ansible.builtin.blockinfile:
+      path: *****************
+      insertafter: "***********"  #特定行の配下へ追記する場合
+      backup: yes
+      block: |
+        *************************
+        *************************
+
+  - name: Add *****************
+    ansible.builtin.blockinfile:
+      path: *****************
+      insertafter: "***********"
+      block: "{{ lookup('file', base_path + '*****************/template/*****************') }}"
+      state: present
+
+# ————————————————————————————
+# 特定行の書き換え
+# ————————————————————————————
+  - name: ****************
+    ansible.builtin.lineinfile:
+      path: ****************
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      backup: yes
+    loop:
+      - { regexp: '**************(変更前)', line: '**************(変更後)' }
+      - { regexp: '**************(変更前)', line: '**************(変更後)' }
+
+# ————————————————————————————
+# 特定箇所の書き換え
+# ————————————————————————————
+  - name: ****************
+    ansible.builtin.replace:
+      path: ****************
+      regexp: "{{ item.regexp }}"
+      replace: "{{ item.replace }}"
+      backup: yes
+    loop:
+      - { regexp: '**************(変更前)', replace: '**************(変更後)' }
+      - { regexp: '**************(変更前)', replace: '**************(変更後)' }
+
+# ————————————————————————————
+# コントロールノードからファイル設置
+# ————————————————————————————
+  - name: ****************
+    ansible.builtin.template:
+      src: "{{ base_path }}*****/template/******"
+      dest: "転送先のパス"
+      owner: "root"
+      group: "root"
+      mode: "0644"
+      backup: yes
+
+# ————————————————————————————
+# ディレクトリ作成
+# ————————————————————————————
+  - name: Create Directory
+    ansible.builtin.file:
+      state: directory
+      path: "*****"
+      owner: "root"
+      group: "root"
+      mode: "0755"
+
+# ————————————————————————————
+# ファイル展開
+# ————————————————————————————
+  - name: Find ****** File
+    ansible.builtin.find:
+      paths: /usr/local/src/
+      patterns: "***************"
+      file_type: file
+    register: ******_files
+
+  - name: Development and Move ****** File
+    ansible.builtin.unarchive:
+      src: "{{ item.path }}"
+      dest: "/var/www/vhosts/{{ servername }}"
+      owner: apache
+      group: apache
+      remote_src: yes
+      extra_opts:
+        - "--strip-components=1"
+    loop: "{{ ******_files.files }}"
+
+# ————————————————————————————
+# DB/DBユーザ作成
+# ————————————————————————————
+  - name: Create MySQL Database
+    community.mysql.mysql_db:
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_pass }}"
+      login_host: localhost
+      name: "{{ ****** }}"
+      state: present
+
+  - name: Create Database User
+    community.mysql.mysql_user:
+      login_user: "{{ login_user }}"
+      login_password: "{{ login_pass }}"
+      login_host: localhost
+      name: "{{ ****** }}"
+      password: "{{ ****** }}"
+      host: localhost
+      priv: "{{ ****** }}.*:ALL"
+      state: present

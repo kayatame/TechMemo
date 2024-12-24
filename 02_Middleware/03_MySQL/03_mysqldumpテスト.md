@@ -1,4 +1,4 @@
-## 1.mysqldumpテスト
+## 1. mysqldumpテスト
 ### 1-1. 20GBデータのmysqldump(エクスポート)
 ```
 # mysqldump --master-data=2 --all-databases -u root > dump.sql

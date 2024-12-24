@@ -1,5 +1,4 @@
 ## 1. 設定手順
-
 ### 1-1. 対象ディレクトリの AllowOverride が All or AuthConfig になっていることを確認
 ```
 # grep "AllowOverride" /etc/httpd/conf.d/01_example.com.conf

@@ -61,14 +61,13 @@ InnoDB: http://dev.mysql.com/doc/refman/5.6/en/operating-system-error-codes.html
 
 
 ## 5. Incorrect string value
+### 5-1. 対象エラー
 ```
 ERROR 1366 (HY000): Incorrect string value: '\xE5\x95\x86\xE5\x93\x81...' for column 'name' at row 1
 ```
 
-### 5-1. 対象エラー
-異なる文字コードのデータを挿入  
-
 ### 5-2. 原因 
+異なる文字コードのデータを挿入  
 対象テーブルやデータベースの設定文字コードを変更する  
 
 ### 5-3. 対応
@@ -77,7 +76,6 @@ ERROR 1366 (HY000): Incorrect string value: '\xE5\x95\x86\xE5\x93\x81...' for co
 
 [MySQLの文字コードをutf8mb4に変更](https://qiita.com/decoch/items/bfa125ae45c16811536a)
 
-
 ## 6. Upgrade is not supported after a crash or shutdown
 ### 6-1. 対象エラー
 ```
@@ -85,7 +83,7 @@ ERROR 1366 (HY000): Incorrect string value: '\xE5\x95\x86\xE5\x93\x81...' for co
 ```
 
 ### 6-2. 原因  
-  redoログファイルは残存している
+redoログファイルは残存している
 
 ### 6-3. 対応
 redoログファイルの削除

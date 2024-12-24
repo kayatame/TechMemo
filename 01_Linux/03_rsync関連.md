@@ -3,6 +3,7 @@
 ```
 # rsync -e 'ssh -i server.key' -av -n /var/www/html/ user@192.168.0.1:/var/www/html/
 ```
+
 ### 1-2. sudo権限を使用する場合
 ```
 # rsync -e 'ssh -i server.key' --rsync-path="sudo rsync" -av -n /var/www/html/ user@192.168.0.1:/var/www/html/
